@@ -1,0 +1,88 @@
+name: Deploy Pipeline Seguro
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: none
+  deployments: none
+
+jobs:
+  build:
+    name: Build app
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Build
+        run: |
+          echo "Construyendo app..."
+          # Simula build
+          sleep 2
+
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Run tests
+        run: |
+          echo "Corriendo tests..."
+          # Simula tests
+          sleep 2
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: test
+    environment:
+      name: staging
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Deploy (staging)
+        env:
+          DEPLOY_SECRET: ${{ secrets.DEPLOY_SECRET }}
+          API_SECRET: ${{ secrets.API_SECRET }}
+          APP_ENV: ${{ vars.APP_ENV }}
+        run: |
+          echo "Desplegando a Staging..."
+          # Nunca imprimir secretos
+          # echo "$DEPLOY_SECRET"  # PROHIBIDO
+          sleep 2
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main' && needs.test.result == 'success'
+    environment:
+      name: production
+      url: https://mi-app.com
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Deploy (production)
+        env:
+          DEPLOY_SECRET: ${{ secrets.DEPLOY_SECRET }}
+          API_SECRET: ${{ secrets.API_SECRET }}
+          APP_ENV: ${{ vars.APP_ENV }}
+        run: |
+          echo "Desplegando a Producción..."
+          # Nunca imprimir secretos
+          sleep 2
